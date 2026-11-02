@@ -24,8 +24,6 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<Item> items;
     private RecyclerView recyclerView;
 
-    int u = 18;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
