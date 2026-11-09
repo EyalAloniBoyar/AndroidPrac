@@ -1,9 +1,12 @@
 package com.example.recyclerviewprac_02;
 
+import static com.example.recyclerviewprac_02.FirebaseRef.refUserItems;
+
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
@@ -15,6 +18,15 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
@@ -23,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
 
     private ArrayList<Item> items;
     private RecyclerView recyclerView;
+    private MyAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,19 +48,48 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        items = new ArrayList<Item>();
-        Item item = new Item(1234, "dd", "aa");
-        items.add(item);
-        Item item1 = new Item(1234, "dd", "aa");
-        items.add(item);
-        Item item2 = new Item(1234, "dd", "aa");
-        items.add(item);
-        Item item3 = new Item(1234, "dd", "aa");
-        items.add(item);
-        Item item4 = new Item(1234, "dd", "aa");
-        items.add(item);
-        Item item5 = new Item(1234, "dd", "aa");
-        items.add(item);
+//        items = new ArrayList<Item>();
+//        Item item = new Item(1234, "dd", "aa");
+//        items.add(item);
+//        Item item1 = new Item(1234, "dd", "aa");
+//        items.add(item);
+//        Item item2 = new Item(1234, "dd", "aa");
+//        items.add(item);
+//        Item item3 = new Item(1234, "dd", "aa");
+//        items.add(item);
+//        Item item4 = new Item(1234, "dd", "aa");
+//        items.add(item);
+//        Item item5 = new Item(1234, "dd", "aa");
+//        items.add(item);
+
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if(currentUser != null) {
+            String userId = currentUser.getUid();
+            DatabaseReference userItemsRef = refUserItems.child(userId);
+
+            userItemsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dS) {
+                    items.clear(); // מומלץ לנקות למניעת כפילויות
+                    for(DataSnapshot data : dS.getChildren()) {
+                        String key = data.getKey();
+                        // תיקון: לוקחים את הנתונים מתוך ה-dataSnapshot למחלקת Item
+                        Item item = data.getValue(Item.class);
+                        if (item != null) {
+                            items.add(item);
+                        }
+                    }
+                    adapter.notifyDataSetChanged();
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+                    // טיפול בשגיאה אם יש צורך
+                }
+            });
+        }
+
 
         recyclerView = findViewById(R.id.recycler);
 
@@ -56,14 +98,33 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         Button btn = findViewById(R.id.button);
+
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Random rnd = new Random();
                 int num = rnd.nextInt(100);
-                Item item = new Item(1234, "dd", "aa");
-                items.add(item);
-                adapter.notifyDataSetChanged();
+                Item item = new Item();
+
+                FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+                if(currentUser != null) {
+                    String userId = currentUser.getUid();
+                    DatabaseReference userItemsRef = refUserItems.child(userId);
+                    String id = userItemsRef.push().getKey();
+                    item.setKeyId(id);
+                    userItemsRef.child(id).setValue(item).addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            if(task.isSuccessful()) {
+                                items.add(item);
+                                adapter.notifyDataSetChanged();
+                            }
+                            else {
+                                // Toast
+                            }
+                        }
+                    });
+                }
             }
         });
 

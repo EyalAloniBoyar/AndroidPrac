@@ -1,6 +1,5 @@
 package com.example.recyclerviewprac_02;
 
-import static android.app.ProgressDialog.show;
 import static com.example.recyclerviewprac_02.FirebaseRef.refAuth;
 
 import android.content.Context;
@@ -40,52 +39,65 @@ public class MainActivityLogin extends AppCompatActivity {
         Button loginButton = findViewById(R.id.loginButton);
 
         signUpButton.setOnClickListener(v -> {
-
             TextView email = findViewById(R.id.email_su);
             TextView password = findViewById(R.id.password_su);
             TextView remember = findViewById(R.id.remember_su);
 
-            refAuth.createUserWithEmailAndPassword(email.getText().toString(), password.getText().toString()).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                @Override
+            String strEmail = email.getText().toString();
+            String strPassword = password.getText().toString();
+            String strRemember = remember.getText().toString();
 
+            refAuth.createUserWithEmailAndPassword(strEmail, strPassword).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
-                    if(task.isSuccessful()) {
+                    if (task.isSuccessful()) {
                         FirebaseUser user = refAuth.getCurrentUser();
-                        Toast.makeText(MainActivityLogin.this, user.getUid(), Toast.LENGTH_LONG).show();
-                    }
-                    else {
+                        Toast.makeText(MainActivityLogin.this, "Registered successfully: " + user.getUid(), Toast.LENGTH_LONG).show();
+
+                        Intent intent = new Intent(MainActivityLogin.this, MainActivity.class);
+                        intent.putExtra("strEmail", strEmail);
+                        intent.putExtra("strPassword", strPassword);
+
+                        SharedPreferences sharedPreferences = getSharedPreferences("MainActivityLogin", Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putString(strEmail, strRemember);
+                        editor.apply();
+
+                        startActivity(intent);
+                    } else {
                         Toast.makeText(MainActivityLogin.this, "Error. Please try again later.", Toast.LENGTH_LONG).show();
                     }
                 }
             });
-
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.putExtra("strEmail", email.toString());
-            intent.putExtra("strPassword", password.toString());
-
-            SharedPreferences sharedPreferences = getSharedPreferences("MainActivityLogin", Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putString(email.getText().toString(), remember.getText().toString());
-            editor.apply();
-
-            startActivity(intent);
         });
 
         loginButton.setOnClickListener(v -> {
-
             TextView email = findViewById(R.id.email_lg);
             TextView password = findViewById(R.id.password_lg);
             TextView remember = findViewById(R.id.remember_lg);
 
-            refAuth.signInWithEmailAndPassword(email.getText().toString(), password.getText().toString()).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                @Override
+            String strEmail = email.getText().toString();
+            String strPassword = password.getText().toString();
+            String strRemember = remember.getText().toString();
 
+            refAuth.signInWithEmailAndPassword(strEmail, strPassword).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
-                    if(task.isSuccessful()) {
+                    if (task.isSuccessful()) {
                         FirebaseUser user = refAuth.getCurrentUser();
-                        Toast.makeText(MainActivityLogin.this, user.getUid(), Toast.LENGTH_LONG).show();
-                    }
-                    else {
+                        Toast.makeText(MainActivityLogin.this, "Logged in successfully", Toast.LENGTH_LONG).show();
+
+                        Intent intent = new Intent(MainActivityLogin.this, MainActivity.class);
+                        intent.putExtra("strEmail", strEmail);
+                        intent.putExtra("strPassword", strPassword);
+
+                        SharedPreferences sharedPreferences = getSharedPreferences("MainActivityLogin", Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        editor.putString(strEmail, strRemember);
+                        editor.apply();
+
+                        startActivity(intent);
+                    } else {
                         Toast.makeText(MainActivityLogin.this, "Error. Please try again later.", Toast.LENGTH_LONG).show();
                     }
                 }
