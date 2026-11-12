@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +24,19 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivityLogin extends AppCompatActivity {
+    // לפעם הבאה חייבים להוסיף פה שרד פרפרנסס בשביל לבדוק את החיבור. ולהעיף את השרד פרפרנסס למטה
+    @Override
+    protected void onStart() {
+        super.onStart();
+        // בדיקה האם המשתמש כבר מחובר ב-Firebase
+        FirebaseUser currentUser = refAuth.getCurrentUser();
+        if (currentUser != null ) {
+            // אם המשתמש מחובר כבר, מעבירים אותי ישר למסך הראשי
+            Intent intent = new Intent(MainActivityLogin.this, MainActivity.class);
+            startActivity(intent);
+            finish(); // סגירת מסך הלוגין כדי שלא יוכל לחזור אליו בלחיצה על חזרה
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +48,8 @@ public class MainActivityLogin extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+
 
         Button signUpButton = findViewById(R.id.signUpButton);
         Button loginButton = findViewById(R.id.loginButton);
@@ -74,15 +90,21 @@ public class MainActivityLogin extends AppCompatActivity {
         loginButton.setOnClickListener(v -> {
             TextView email = findViewById(R.id.email_lg);
             TextView password = findViewById(R.id.password_lg);
-            TextView remember = findViewById(R.id.remember_lg);
+            CheckBox remember = findViewById(R.id.remember_lg);
 
             String strEmail = email.getText().toString();
             String strPassword = password.getText().toString();
-            String strRemember = remember.getText().toString();
+            boolean boolRemember = remember.isChecked();
 
             refAuth.signInWithEmailAndPassword(strEmail, strPassword).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
+                    SharedPreferences sharedPreferences = getSharedPreferences("MainActivityLogin", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    if(boolRemember) {
+                        editor.putString(strEmail, );
+
+                    }
                     if (task.isSuccessful()) {
                         FirebaseUser user = refAuth.getCurrentUser();
                         Toast.makeText(MainActivityLogin.this, "Logged in successfully", Toast.LENGTH_LONG).show();
@@ -91,9 +113,7 @@ public class MainActivityLogin extends AppCompatActivity {
                         intent.putExtra("strEmail", strEmail);
                         intent.putExtra("strPassword", strPassword);
 
-                        SharedPreferences sharedPreferences = getSharedPreferences("MainActivityLogin", Context.MODE_PRIVATE);
-                        SharedPreferences.Editor editor = sharedPreferences.edit();
-                        editor.putString(strEmail, strRemember);
+                        editor.putString(strEmail, boolRemember);
                         editor.apply();
 
                         startActivity(intent);
