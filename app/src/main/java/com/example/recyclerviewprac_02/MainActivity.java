@@ -5,7 +5,6 @@ import static com.example.recyclerviewprac_02.FirebaseRef.refUserItems;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -48,20 +47,12 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-//        items = new ArrayList<Item>();
-//        Item item = new Item(1234, "dd", "aa");
-//        items.add(item);
-//        Item item1 = new Item(1234, "dd", "aa");
-//        items.add(item);
-//        Item item2 = new Item(1234, "dd", "aa");
-//        items.add(item);
-//        Item item3 = new Item(1234, "dd", "aa");
-//        items.add(item);
-//        Item item4 = new Item(1234, "dd", "aa");
-//        items.add(item);
-//        Item item5 = new Item(1234, "dd", "aa");
-//        items.add(item);
+        items = new ArrayList<>();
 
+        recyclerView = findViewById(R.id.recycler);
+        adapter = new MyAdapter(items);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if(currentUser != null) {
@@ -71,10 +62,9 @@ public class MainActivity extends AppCompatActivity {
             userItemsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dS) {
-                    items.clear(); // מומלץ לנקות למניעת כפילויות
+                    items.clear();
+
                     for(DataSnapshot data : dS.getChildren()) {
-                        String key = data.getKey();
-                        // תיקון: לוקחים את הנתונים מתוך ה-dataSnapshot למחלקת Item
                         Item item = data.getValue(Item.class);
                         if (item != null) {
                             items.add(item);
@@ -82,23 +72,14 @@ public class MainActivity extends AppCompatActivity {
                     }
                     adapter.notifyDataSetChanged();
                 }
-
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
-                    // טיפול בשגיאה אם יש צורך
+
                 }
             });
         }
 
-
-        recyclerView = findViewById(R.id.recycler);
-
-        MyAdapter adapter = new MyAdapter(items);
-        recyclerView.setAdapter(adapter);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
         Button btn = findViewById(R.id.button);
-
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -107,11 +88,13 @@ public class MainActivity extends AppCompatActivity {
                 Item item = new Item();
 
                 FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
                 if(currentUser != null) {
                     String userId = currentUser.getUid();
                     DatabaseReference userItemsRef = refUserItems.child(userId);
                     String id = userItemsRef.push().getKey();
                     item.setKeyId(id);
+
                     userItemsRef.child(id).setValue(item).addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
@@ -119,18 +102,16 @@ public class MainActivity extends AppCompatActivity {
                                 items.add(item);
                                 adapter.notifyDataSetChanged();
                             }
-                            else {
-                                // Toast
-                            }
                         }
                     });
                 }
             }
         });
 
+        // מחיקה וגרירה (ItemTouchHelper)
         ItemTouchHelper.SimpleCallback simpleCallback = new ItemTouchHelper.SimpleCallback(
                 ItemTouchHelper.UP | ItemTouchHelper.DOWN, ItemTouchHelper.RIGHT | ItemTouchHelper.LEFT
-                ) {
+        ) {
             @Override
             public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
                 int fromPos = viewHolder.getAdapterPosition();
@@ -153,5 +134,4 @@ public class MainActivity extends AppCompatActivity {
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleCallback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
     }
-
 }
